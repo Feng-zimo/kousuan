@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>口算冲刺 · 每天三分钟</title>
+<style>
+  :root{
+    --bg1:#eef4ff; --bg2:#fff5ec; --ink:#22304a; --sub:#6b7a99;
+    --card:#ffffff; --line:#e6ecf7; --brand:#4a6cf7; --brand2:#7b8cff;
+    --ok:#18a058; --okbg:#e9f9f0; --no:#e5484d; --nobg:#fdeeee;
+    --shadow:0 10px 30px rgba(40,60,110,.10);
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0}
+  body{
+    min-height:100vh; color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei","WenQuanYi Micro Hei",sans-serif;
+    background:linear-gradient(160deg,var(--bg1) 0%,#f7f9ff 45%,var(--bg2) 100%);
+    display:flex; align-items:flex-start; justify-content:center;
+    padding:22px 14px 40px;
+  }
+  .wrap{width:100%; max-width:560px}
+  header{display:flex; align-items:baseline; gap:10px; margin:0 4px 16px}
+  h1{font-size:22px; margin:0; letter-spacing:1px}
+  header small{color:var(--sub); font-size:13px}
+  .card{background:var(--card); border:1px solid var(--line); border-radius:20px;
+        box-shadow:var(--shadow); padding:22px; margin-bottom:14px}
+  .hidden{display:none !important}
+
+  /* ---- 设置 ---- */
+  .row{margin-bottom:18px}
+  .row:last-child{margin-bottom:0}
+  .lb{display:block; font-size:13px; color:var(--sub); margin-bottom:9px; font-weight:600}
+  .seg{display:flex; gap:8px; flex-wrap:wrap}
+  .seg button{
+    flex:1 1 0; min-width:88px; padding:11px 8px; border:1.5px solid var(--line);
+    background:#fafbff; color:var(--ink); border-radius:12px; font-size:14px;
+    font-family:inherit; cursor:pointer; transition:.15s; line-height:1.35
+  }
+  .seg button small{display:block; font-size:11px; color:var(--sub); margin-top:3px; font-weight:400}
+  .seg button.on{border-color:var(--brand); background:#f0f4ff; color:var(--brand); font-weight:700}
+  .seg button.on small{color:var(--brand2)}
+  .seg button:active{transform:scale(.97)}
+  .btn{
+    width:100%; padding:15px; border:0; border-radius:14px; font-size:17px; font-weight:700;
+    font-family:inherit; color:#fff; cursor:pointer;
+    background:linear-gradient(135deg,var(--brand),var(--brand2));
+    box-shadow:0 6px 16px rgba(74,108,247,.28); transition:.15s
+  }
+  .btn:active{transform:scale(.985)}
+  .btn.ghost{background:#f3f6fd; color:var(--brand); box-shadow:none; border:1.5px solid var(--line)}
+  .btn.sm{width:auto; padding:12px 22px; font-size:15px; flex:1}
+  .best{margin-top:12px; font-size:13px; color:var(--sub); text-align:center; min-height:18px}
+
+  /* ---- 答题 ---- */
+  .hud{display:flex; justify-content:space-between; align-items:center; font-size:13px; color:var(--sub); margin-bottom:12px}
+  .hud b{color:var(--ink); font-size:15px}
+  .bar{height:7px; background:#eef2fb; border-radius:99px; overflow:hidden; margin-bottom:26px}
+  .bar i{display:block; height:100%; width:0; border-radius:99px;
+         background:linear-gradient(90deg,var(--brand),var(--brand2)); transition:width .25s}
+  .qbox{text-align:center; padding:8px 0 4px}
+  .qtext{font-size:clamp(38px,11vw,58px); font-weight:800; letter-spacing:2px;
+         font-variant-numeric:tabular-nums; line-height:1.2; min-height:70px}
+  .qtext .op{color:var(--brand); margin:0 6px}
+  .qtext .blank{display:inline-block; min-width:1.6em; border-bottom:4px solid var(--brand);
+                color:var(--brand); vertical-align:baseline}
+  #ans{
+    display:block; width:100%; margin:22px auto 14px; padding:14px 16px;
+    font-size:30px; font-weight:700; text-align:center; font-family:inherit;
+    font-variant-numeric:tabular-nums; color:var(--ink);
+    border:2px solid var(--line); border-radius:14px; background:#fafbff; outline:none;
+    transition:.15s
+  }
+  #ans:focus{border-color:var(--brand); background:#fff; box-shadow:0 0 0 4px rgba(74,108,247,.10)}
+  #ans.ok{border-color:var(--ok); background:var(--okbg)}
+  #ans.no{border-color:var(--no); background:var(--nobg)}
+  .feedback{min-height:26px; font-size:15px; font-weight:700; text-align:center; margin-bottom:12px}
+  .feedback.ok{color:var(--ok)} .feedback.no{color:var(--no)}
+  .tip{font-size:12px; color:var(--sub); text-align:center; line-height:1.7}
+  .kbd{display:inline-block; padding:1px 6px; border:1px solid var(--line); border-bottom-width:2px;
+       border-radius:5px; background:#fafbff; font-size:11px; font-family:inherit}
+  .quick{display:flex; gap:8px; margin-top:12px}
+  .quick button{flex:1; padding:10px 4px; border:1px solid var(--line); border-radius:10px;
+    background:#fafbff; font-family:inherit; font-size:14px; color:var(--sub); cursor:pointer}
+  .quick button:active{transform:scale(.96)}
+
+  /* ---- 结算 ---- */
+  .score{text-align:center; padding:6px 0 18px}
+  .score .num{font-size:64px; font-weight:800; line-height:1; color:var(--brand)}
+  .score .unit{font-size:16px; color:var(--sub); margin-left:4px}
+  .score .medal{font-size:15px; margin-top:10px; color:var(--sub)}
+  .stats{display:flex; gap:8px; margin-bottom:18px}
+  .stats div{flex:1; text-align:center; background:#f7f9ff; border-radius:12px; padding:12px 4px}
+  .stats b{display:block; font-size:19px; font-variant-numeric:tabular-nums}
+  .stats span{font-size:11px; color:var(--sub)}
+  .wrongs h3{font-size:14px; margin:0 0 10px; color:var(--sub)}
+  .wrongs ul{list-style:none; margin:0 0 18px; padding:0; max-height:210px; overflow:auto}
+  .wrongs li{display:flex; justify-content:space-between; gap:10px; padding:9px 12px;
+    background:var(--nobg); border-radius:10px; margin-bottom:7px; font-size:14px;
+    font-variant-numeric:tabular-nums}
+  .wrongs li .mine{color:var(--no); text-decoration:line-through}
+  .wrongs li .right{color:var(--ok); font-weight:700}
+  .actions{display:flex; gap:10px}
+  footer{text-align:center; font-size:12px; color:var(--sub); margin-top:18px; line-height:1.8}
+  footer a{color:var(--brand2); text-decoration:none}
+  @media (max-width:380px){ .seg button{min-width:76px; font-size:13px} .card{padding:18px} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header><h1>口算冲刺</h1><small>每天三分钟 · 越算越快</small></header>
+
+  <!-- 设置页 -->
+  <section class="card" id="setup">
+    <div class="row">
+      <span class="lb">选难度</span>
+      <div class="seg" id="lv">
+        <button data-v="1" class="on">一二年级<small>20 以内加减</small></button>
+        <button data-v="2">三四年级<small>百以内 + 表内乘除</small></button>
+        <button data-v="3">五六年级<small>两步混合 + 小数</small></button>
+      </div>
+    </div>
+    <div class="row">
+      <span class="lb">题量</span>
+      <div class="seg" id="cnt">
+        <button data-v="10" class="on">10 题<small>热身</small></button>
+        <button data-v="20">20 题<small>标准</small></button>
+        <button data-v="50">50 题<small>挑战</small></button>
+      </div>
+    </div>
+    <div class="row">
+      <span class="lb">答题方式</span>
+      <div class="seg" id="mode">
+        <button data-v="free" class="on">练习<small>错了给看答案</small></button>
+        <button data-v="strict">限时<small>每题 12 秒</small></button>
+      </div>
+    </div>
+    <button class="btn" id="start">开始练习</button>
+    <div class="best" id="best"></div>
+  </section>
+
+  <!-- 答题页 -->
+  <section class="card hidden" id="play">
+    <div class="hud">
+      <span>第 <b id="idx">1</b> / <span id="total">10</span> 题</span>
+      <span>⏱ <b id="time">0.0</b>s</span>
+      <span>连对 <b id="streak">0</b></span>
+    </div>
+    <div class="bar"><i id="bar"></i></div>
+    <div class="qbox">
+      <div class="qtext" id="qtext"></div>
+      <input id="ans" type="text" inputmode="decimal" autocomplete="off"
+             aria-label="输入答案" placeholder="?" enterkeyhint="done">
+      <div class="feedback" id="fb" aria-live="polite"></div>
+      <button class="btn" id="submit">确定</button>
+      <div class="quick">
+        <button data-n="⌫">⌫ 退格</button>
+        <button data-n="-">− 负号</button>
+        <button data-n=".">. 小数点</button>
+        <button data-n="skip">跳过这题</button>
+      </div>
+      <div class="tip">数字键直接输入 · <span class="kbd">Enter</span> 提交并下一题 · <span class="kbd">Esc</span> 结束</div>
+    </div>
+  </section>
+
+  <!-- 结算页 -->
+  <section class="card hidden" id="result">
+    <div class="score">
+      <div><span class="num" id="scoreN">0</span><span class="unit">分</span></div>
+      <div class="medal" id="medal"></div>
+    </div>
+    <div class="stats">
+      <div><b id="sRight">0</b><span>答对</span></div>
+      <div><b id="sTime">0s</b><span>用时</span></div>
+      <div><b id="sAvg">0s</b><span>平均每题</span></div>
+      <div><b id="sBest">0</b><span>最长连对</span></div>
+    </div>
+    <div class="wrongs" id="wrongsBox">
+      <h3>错题回顾</h3>
+      <ul id="wrongs"></ul>
+    </div>
+    <div class="actions">
+      <button class="btn sm" id="again">再来一组</button>
+      <button class="btn sm ghost" id="back">换设置</button>
+    </div>
+  </section>
+
+  <footer>纯前端 · 零依赖 · 题目只在本机生成，不上传任何数据<br>
+    <a href="https://github.com/Feng-zimo/kousuan">源码</a> · 键盘和触屏都能用
+  </footer>
+</div>
+
+<script>
+(function(){
+  'use strict';
+  var $ = function(id){ return document.getElementById(id); };
+  var cfg = { lv:1, cnt:10, mode:'free' };
+  var S = null, timer = null, jumpTimer = null, lock = false;
+
+  /* ---------- 设置交互 ---------- */
+  function bindSeg(id, key){
+    var box = $(id);
+    box.addEventListener('click', function(e){
+      var b = e.target.closest('button'); if(!b) return;
+      Array.prototype.forEach.call(box.children, function(x){ x.classList.remove('on'); });
+      b.classList.add('on');
+      cfg[key] = isNaN(+b.dataset.v) ? b.dataset.v : +b.dataset.v;
+      showBest();
+    });
+  }
+  bindSeg('lv','lv'); bindSeg('cnt','cnt'); bindSeg('mode','mode');
+
+  function bestKey(){ return 'kousuan.best.'+cfg.lv+'.'+cfg.cnt+'.'+cfg.mode; }
+  function getBest(){ try{ return JSON.parse(localStorage.getItem(bestKey())||'null'); }catch(e){ return null; } }
+  function showBest(){
+    var b = getBest();
+    $('best').textContent = b ? ('本机最好：'+b.score+' 分 · '+b.time.toFixed(1)+'s · '+b.date) : '这个难度还没有记录，来开个张吧';
+  }
+  showBest();
+
+  /* ---------- 出题 ---------- */
+  function ri(a,b){ return a + Math.floor(Math.random()*(b-a+1)); }
+  function pick(arr){ return arr[ri(0,arr.length-1)]; }
+  function r1(x){ return Math.round(x*10)/10; }
+  function fmt(x){ return (Math.round(x*10)/10).toString(); }
+
+  function makeQ(lv, seen){
+    var q = null;
+    for(var k=0;k<60;k++){
+      var a,b,c,txt,ans;
+      if(lv===1){
+        if(Math.random()<0.5){ a=ri(1,19); b=ri(1,20-a); txt=a+' + '+b; ans=a+b; }
+        else { a=ri(2,20); b=ri(1,a); txt=a+' − '+b; ans=a-b; }
+      }else if(lv===2){
+        var t=ri(1,4);
+        if(t===1){ a=ri(10,89); b=ri(1,100-a); txt=a+' + '+b; ans=a+b; }
+        else if(t===2){ a=ri(10,100); b=ri(1,a); txt=a+' − '+b; ans=a-b; }
+        else if(t===3){ a=ri(2,9); b=ri(2,9); txt=a+' × '+b; ans=a*b; }
+        else { b=ri(2,9); ans=ri(2,9); a=b*ans; txt=a+' ÷ '+b; }
+      }else{
+        var u=ri(1,4);
+        if(u===1){ a=ri(2,9); b=ri(2,9); c=ri(5,40); txt=a+' × '+b+' + '+c; ans=a*b+c; }
+        else if(u===2){ a=ri(2,9); b=ri(2,9); c=ri(1,20); txt='('+c+' + '+a+') × '+b; ans=(c+a)*b; }
+        else if(u===3){ a=ri(11,99); b=ri(2,9); txt=a+' × '+b; ans=a*b; }
+        else { a=r1(ri(5,150)/10); b=r1(ri(5,150)/10);
+               if(Math.random()<0.5){ txt=fmt(a)+' + '+fmt(b); ans=r1(a+b); }
+               else { if(a<b){ var z=a;a=b;b=z; } txt=fmt(a)+' − '+fmt(b); ans=r1(a-b); } }
+      }
+      q = { txt:txt, ans:r1(ans), op:txt };
+      if(!seen[q.op]) return q;
+    }
+    return q;
+  }
+
+  /* ---------- 状态 ---------- */
+  function start(){
+    S = { i:0, n:cfg.cnt, right:0, streak:0, maxStreak:0, wrongs:[],
+          t0:Date.now(), seen:{} , q:null, elapsed:0 };
+    $('total').textContent = cfg.cnt;
+    $('setup').classList.add('hidden');
+    $('result').classList.add('hidden');
+    $('play').classList.remove('hidden');
+    clearInterval(timer);
+    timer = setInterval(function(){
+      S.elapsed = (Date.now()-S.t0)/1000;
+      $('time').textContent = S.elapsed.toFixed(1);
+    },100);
+    next();
+  }
+
+  function next(){
+    clearTimeout(jumpTimer);
+    if(S.i >= S.n){ return finish(); }
+    S.q = makeQ(cfg.lv, S.seen);
+    S.seen[S.q.op] = 1;
+    S.i++;
+    $('idx').textContent = S.i;
+    $('bar').style.width = ((S.i-1)/S.n*100)+'%';
+    $('qtext').innerHTML = S.q.txt.split(/([+−×÷])/).map(function(p){
+      return /^[+−×÷]$/.test(p) ? '<span class="op">'+p+'</span>' : p;
+    }).join('') + ' = <span class="blank" id="blank">?</span>';
+    var inp=$('ans');
+    inp.value=''; inp.className=''; inp.disabled=false;
+    $('fb').textContent=''; $('fb').className='feedback';
+    lock=false;
+    try{ inp.focus({preventScroll:true}); }catch(e){ inp.focus(); }
+    if(cfg.mode==='strict'){
+      var left=12, tick=setInterval(function(){
+        left-=0.1;
+        if(left<=0){ clearInterval(tick); if(!lock){ grade(true); } }
+      },100);
+      S.perStop=function(){ clearInterval(tick); };
+    }
+  }
+
+  function grade(timeout){
+    if(lock) return;
+    lock=true;
+    if(S.perStop) S.perStop();
+    var inp=$('ans'), raw=inp.value.trim();
+    var val = raw==='' ? NaN : Number(raw);
+    var good = !isNaN(val) && Math.abs(val - S.q.ans) < 0.001;
+    var skip = raw==='' && timeout;
+    if(good){
+      S.right++; S.streak++; S.maxStreak=Math.max(S.maxStreak,S.streak);
+      inp.className='ok'; $('fb').className='feedback ok';
+      $('fb').textContent = pick(['✓ 对了！','✓ 漂亮','✓ 继续保持','✓ 很快嘛']);
+      $('blank') && ($('blank').textContent=fmt(S.q.ans));
+    }else{
+      S.streak=0;
+      inp.className='no'; $('fb').className='feedback no';
+      $('fb').textContent = (skip?'⏰ 超时 · ':'✗ ') + '正确答案是 '+fmt(S.q.ans);
+      S.wrongs.push({ q:S.q.txt, mine: raw===''?'（未答）':raw, right:fmt(S.q.ans) });
+    }
+    $('streak').textContent=S.streak;
+    inp.disabled=true;
+    jumpTimer = setTimeout(next, good?380:1150);
+  }
+
+  function finish(){
+    clearInterval(timer);
+    clearTimeout(jumpTimer);
+    if(S.perStop) S.perStop();
+    var t=(Date.now()-S.t0)/1000;
+    var score=Math.round(S.right/S.n*100);
+    $('play').classList.add('hidden');
+    $('result').classList.remove('hidden');
+    $('scoreN').textContent=score;
+    $('sRight').textContent=S.right+' / '+S.n;
+    $('sTime').textContent=t.toFixed(1)+'s';
+    $('sAvg').textContent=(t/S.n).toFixed(1)+'s';
+    $('sBest').textContent=S.maxStreak;
+    $('medal').textContent = score===100 ? '🏆 全对！太稳了' :
+      score>=90 ? '🌟 很棒，就差一点点' : score>=70 ? '💪 不错，再练一组' : '📚 慢慢来，先看清符号';
+    var ul=$('wrongs'); ul.innerHTML='';
+    if(S.wrongs.length===0){
+      $('wrongsBox').classList.add('hidden');
+    }else{
+      $('wrongsBox').classList.remove('hidden');
+      S.wrongs.forEach(function(w){
+        var li=document.createElement('li');
+        li.innerHTML='<span>'+w.q+' =</span><span><span class="mine">'+w.mine+'</span> → <span class="right">'+w.right+'</span></span>';
+        ul.appendChild(li);
+      });
+    }
+    var b=getBest(), better=!b || score>b.score || (score===b.score && t<b.time);
+    if(better){
+      try{ localStorage.setItem(bestKey(), JSON.stringify({score:score,time:t,
+        date:new Date().toLocaleDateString('zh-CN')})); }catch(e){}
+      $('medal').textContent += ' · 🎉 新纪录';
+    }
+  }
+
+  /* ---------- 输入 ---------- */
+  $('start').addEventListener('click', start);
+  $('submit').addEventListener('click', function(){ grade(false); });
+  $('again').addEventListener('click', start);
+  $('back').addEventListener('click', function(){
+    clearInterval(timer); clearTimeout(jumpTimer); if(S&&S.perStop) S.perStop();
+    $('result').classList.add('hidden'); $('setup').classList.remove('hidden'); showBest();
+  });
+
+  $('ans').addEventListener('keydown', function(e){
+    if(e.key==='Enter'){ e.preventDefault(); e.stopPropagation(); grade(false); }
+  });
+  document.addEventListener('keydown', function(e){
+    if($('play').classList.contains('hidden')) return;
+    if(e.key==='Escape'){ e.preventDefault(); finish(); return; }
+    if(lock) return;
+    var inp=$('ans'), inBox=document.activeElement===inp;
+    if(e.key==='Enter' && !inBox){ e.preventDefault(); grade(false); }
+    else if((/^[0-9]$/.test(e.key)||e.key==='-'||e.key==='.') && !inBox){
+      e.preventDefault(); inp.value+=e.key; inp.focus();
+    }
+  });
+  $('play').addEventListener('click', function(e){
+    var b=e.target.closest('.quick button'); if(!b||lock) return;
+    var n=b.dataset.n, inp=$('ans');
+    if(n==='skip'){ inp.value=''; grade(true); }
+    else if(n==='⌫'){ inp.value=inp.value.slice(0,-1); }
+    else { inp.value+=n; }
+    inp.focus();
+  });
+})();
+</script>
+</body>
+</html>
